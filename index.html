@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0D1117">
+<title>Voca</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0D1117;
+    --surface: #161B22;
+    --card:    #21262D;
+    --border:  #30363D;
+    --accent:  #7C3AED;
+    --accent-h:#6D28D9;
+    --rec:     #EF4444;
+    --text:    #E6EDF3;
+    --muted:   #8B949E;
+    --green:   #3FB950;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: "Inter", sans-serif; color: var(--text); }
+
+  .app { width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Header ── */
+  .header {
+    padding: 1.2rem 1.4rem .9rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), #4F46E5);
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo svg { width: 20px; height: 20px; stroke: white; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .app-title { font-family: "Space Grotesk", sans-serif; font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; }
+  .app-sub   { font-size: .7rem; color: var(--muted); margin-top: -.05rem; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: .6rem; }
+  .note-count-badge {
+    font-size: .72rem; font-weight: 600;
+    background: rgba(124,58,237,.2); color: #A78BFA;
+    border-radius: 20px; padding: 2px 10px;
+    min-width: 1.8em; text-align: center;
+  }
+  .btn-export {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); border-radius: 8px;
+    padding: 6px 14px; font-size: .78rem;
+    font-family: "Inter", sans-serif; cursor: pointer;
+    transition: color .2s, border-color .2s;
+  }
+  .btn-export:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ── Record Area ── */
+  .rec-area {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 1.8rem 1.5rem 1.2rem;
+    gap: .9rem;
+  }
+
+  .btn-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+
+  .ripple-ring {
+    position: absolute;
+    width: 108px; height: 108px;
+    border-radius: 50%;
+    border: 2px solid var(--rec);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ripple-ring.show { animation: ripple 1.6s ease-out infinite; }
+  .ripple-ring:nth-child(2).show { animation-delay: .53s; }
+  .ripple-ring:nth-child(3).show { animation-delay: 1.06s; }
+  @keyframes ripple { 0%{opacity:.65;transform:scale(.9)} 100%{opacity:0;transform:scale(1.85)} }
+
+  .rec-btn {
+    width: 86px; height: 86px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+    background: linear-gradient(135deg, var(--accent), #4F46E5);
+    box-shadow: 0 6px 30px rgba(124,58,237,.45);
+    transition: transform .12s, background .25s, box-shadow .25s;
+  }
+  .rec-btn:active { transform: scale(.92); }
+  .rec-btn[data-state="recording"] {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    box-shadow: 0 6px 30px rgba(239,68,68,.5);
+  }
+  .rec-btn[data-state="transcribing"] {
+    background: var(--surface);
+    box-shadow: none; cursor: default;
+  }
+  .rec-btn svg { width: 36px; height: 36px; stroke: white; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .icon-mic  { display: block; }
+  .icon-stop { display: none; }
+  [data-state="recording"]    .icon-mic  { display: none; }
+  [data-state="recording"]    .icon-stop { display: block; }
+  [data-state="transcribing"] .icon-mic  { display: block; opacity: .3; }
+
+  .status {
+    font-size: .82rem; color: var(--muted);
+    min-height: 1.2em; text-align: center;
+    max-width: 280px; line-height: 1.45;
+  }
+  .timer {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: .95rem; font-weight: 700;
+    color: var(--rec); min-height: 1.4em;
+    letter-spacing: .04em;
+  }
+
+  /* ── Transcript ── */
+  .transcript-box {
+    width: 100%; max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 12px;
+    padding: .9rem 1.1rem;
+    font-size: .88rem; line-height: 1.6;
+    color: var(--text);
+    display: none;
+  }
+  .transcript-box.visible { display: block; animation: fadein .3s ease; }
+  @keyframes fadein { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+  .transcript-label {
+    font-size: .68rem; color: var(--accent);
+    font-weight: 600; letter-spacing: .07em;
+    text-transform: uppercase; margin-bottom: .35rem;
+  }
+
+  /* ── Notes Section ── */
+  .notes-section {
+    flex: 1; overflow: hidden;
+    display: flex; flex-direction: column;
+    padding: 0 1.4rem;
+  }
+  .notes-header {
+    font-size: .7rem; color: var(--muted);
+    font-weight: 600; letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: .65rem 0 .5rem;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .notes-list {
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column;
+    gap: .55rem; padding-bottom: 1.5rem;
+  }
+  .notes-list::-webkit-scrollbar { width: 3px; }
+  .notes-list::-webkit-scrollbar-track { background: transparent; }
+  .notes-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .empty { color: var(--muted); font-size: .85rem; text-align: center; padding: 2.5rem 0; line-height: 1.8; }
+
+  .note-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: .8rem 1rem;
+    transition: border-color .2s;
+    animation: fadein .25s ease;
+  }
+  .note-card:hover { border-color: #4B5563; }
+
+  .note-meta { display: flex; align-items: center; gap: .45rem; margin-bottom: .38rem; }
+  .note-date { font-size: .7rem; color: var(--muted); }
+  .note-lang {
+    font-size: .63rem; background: rgba(124,58,237,.15);
+    border: 1px solid rgba(124,58,237,.3); color: #A78BFA;
+    border-radius: 4px; padding: 1px 6px;
+  }
+  .note-dur  { font-size: .68rem; color: var(--muted); margin-left: auto; }
+  .note-text { font-size: .87rem; line-height: 1.6; color: var(--text); word-break: break-word; }
+  .note-actions { display: flex; gap: .4rem; margin-top: .55rem; }
+  .btn-copy, .btn-del {
+    border: none; border-radius: 6px;
+    padding: 4px 12px; font-size: .73rem;
+    font-family: "Inter", sans-serif; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-copy { background: rgba(124,58,237,.15); color: #A78BFA; }
+  .btn-copy:hover { background: rgba(124,58,237,.28); }
+  .btn-del  { background: rgba(239,68,68,.1);  color: #FCA5A5; }
+  .btn-del:hover  { background: rgba(239,68,68,.22); }
+
+  /* ── Setup Overlay ── */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.88);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px); padding: 1rem;
+  }
+  .overlay.hidden { display: none; }
+  .setup-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 2rem 1.8rem;
+    max-width: 400px; width: 100%; text-align: center;
+  }
+  .setup-box .setup-logo {
+    width: 52px; height: 52px; margin: 0 auto .9rem;
+    background: linear-gradient(135deg, var(--accent), #4F46E5);
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .setup-box .setup-logo svg { width: 26px; height: 26px; stroke: white; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .setup-box h2 { font-family: "Space Grotesk", sans-serif; font-size: 1.5rem; font-weight: 700; margin-bottom: .35rem; }
+  .setup-box p  { font-size: .86rem; color: var(--muted); line-height: 1.6; margin-bottom: .5rem; }
+  .setup-box .label { font-size: .75rem; color: #A78BFA; font-weight: 600; text-align: left; display: block; margin-bottom: .3rem; margin-top: .9rem; }
+  .setup-box input {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    font-size: .9rem; font-family: "Inter", sans-serif;
+    color: var(--text); outline: none;
+  }
+  .setup-box input:focus { border-color: var(--accent); }
+  .save-btn {
+    background: linear-gradient(135deg, var(--accent), #4F46E5);
+    color: white; border: none; border-radius: 50px;
+    padding: 12px 32px; font-family: "Space Grotesk", sans-serif;
+    font-size: 1.05rem; font-weight: 700;
+    cursor: pointer; width: 100%; margin-top: 1.1rem;
+    transition: opacity .2s;
+  }
+  .save-btn:hover { opacity: .88; }
+  .err { font-size: .78rem; color: var(--rec); min-height: 1.1em; margin-top: .4rem; }
+  .hint { font-size: .72rem; color: #4B5563; margin-top: .75rem; line-height: 1.6; }
+  .reset-link { font-size: .72rem; color: var(--muted); cursor: pointer; margin-top: .5rem; display: inline-block; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- Setup Overlay -->
+<div class="overlay" id="overlay">
+  <div class="setup-box">
+    <div class="setup-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </div>
+    <h2>Voca einrichten</h2>
+    <p>Verbinde deinen OpenAI Key um Sprache automatisch in Text umzuwandeln.</p>
+    <span class="label">OpenAI API Key</span>
+    <input type="password" id="openai-key-input" placeholder="sk-..."
+      autocomplete="off" spellcheck="false"
+      onkeydown="if(event.key==='Enter') saveKey()"/>
+    <button class="save-btn" onclick="saveKey()">Loslegen →</button>
+    <div class="err" id="key-err"></div>
+    <div class="hint">platform.openai.com → API keys<br>Wird nur lokal auf diesem Gerät gespeichert.</div>
+    <span class="reset-link" onclick="showResetConfirm()">Key löschen / ändern</span>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app">
+
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </div>
+    <div>
+      <div class="app-title">Voca</div>
+      <div class="app-sub">Sprache als Text</div>
+    </div>
+    <div class="header-right">
+      <span class="note-count-badge" id="note-count"></span>
+      <button class="btn-export" onclick="exportAll()">Export ↓</button>
+    </div>
+  </div>
+
+  <div class="rec-area">
+    <div class="btn-wrap">
+      <div class="ripple-ring"></div>
+      <div class="ripple-ring"></div>
+      <div class="ripple-ring"></div>
+      <button class="rec-btn" id="rec-btn" data-state="idle" onclick="toggleRecording()">
+        <svg class="icon-mic" viewBox="0 0 24 24">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+        <svg class="icon-stop" viewBox="0 0 24 24">
+          <rect x="6" y="6" width="12" height="12" rx="2.5" fill="white"/>
+        </svg>
+      </button>
+    </div>
+    <div class="status" id="status">Tippen zum Aufnehmen</div>
+    <div class="timer" id="timer"></div>
+    <div class="transcript-box" id="transcript">
+      <div class="transcript-label">Transkription</div>
+      <span id="transcript-text"></span>
+    </div>
+  </div>
+
+  <div class="notes-section">
+    <div class="notes-header">
+      Gespeicherte Notizen
+    </div>
+    <div class="notes-list" id="notes-list"></div>
+  </div>
+
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
