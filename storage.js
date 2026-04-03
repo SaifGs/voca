@@ -10,10 +10,10 @@ export function loadNotes() {
   try {
     const raw   = localStorage.getItem(STORAGE_NOTES_KEY);
     const notes = raw ? JSON.parse(raw) : [];
-    log(`${notes.length} Notiz(en) geladen`);
+    log(`${notes.length} note(s) loaded`);
     return notes;
   } catch {
-    log("Fehler beim Laden — leeres Array zurückgegeben");
+    log("Load error — returning empty array");
     return [];
   }
 }
@@ -31,14 +31,14 @@ export function saveNote(text, durationMs, language, summary) {
   notes.unshift(note);
   if (notes.length > MAX_NOTES) notes.length = MAX_NOTES;
   localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
-  log(`Notiz gespeichert — ID: ${note.id}, Sprache: "${note.language}", Zeichen: ${note.text.length}, Zusammenfassung: ${note.summary ? "ja" : "nein"}`);
+  log(`Note saved — ID: ${note.id}, language: "${note.language}", chars: ${note.text.length}, summary: ${note.summary ? "yes" : "no"}`);
   return note;
 }
 
 export function deleteNote(id) {
   const notes = loadNotes().filter(n => n.id !== id);
   localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
-  log(`Notiz gelöscht — ID: ${id}`);
+  log(`Note deleted — ID: ${id}`);
 }
 
 export function exportNotes() {
@@ -46,10 +46,10 @@ export function exportNotes() {
   if (!notes.length) return "";
   const lines = notes.map(n => {
     const d       = new Date(n.timestamp);
-    const dateStr = d.toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric" });
-    const timeStr = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const timeStr = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     const lang    = n.language ? ` [${n.language}]` : "";
-    const summary = n.summary ? `\nZusammenfassung: ${n.summary}` : "";
+    const summary = n.summary ? `\nSummary: ${n.summary}` : "";
     return `[${dateStr} ${timeStr}${lang}]\n${n.text}${summary}`;
   });
   return lines.join("\n\n---\n\n");

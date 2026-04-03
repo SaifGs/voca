@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -296,16 +296,16 @@
     <div class="setup-logo">
       <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
     </div>
-    <h2>Voca einrichten</h2>
-    <p>Verbinde deinen OpenAI Key um Sprache automatisch in Text umzuwandeln.</p>
+    <h2>Set up Voca</h2>
+    <p>Connect your OpenAI key to automatically convert speech to text.</p>
     <span class="label">OpenAI API Key</span>
     <input type="password" id="openai-key-input" placeholder="sk-..."
       autocomplete="off" spellcheck="false"
       onkeydown="if(event.key==='Enter') saveKey()"/>
-    <button class="save-btn" onclick="saveKey()">Loslegen →</button>
+    <button class="save-btn" onclick="saveKey()">Get started →</button>
     <div class="err" id="key-err"></div>
-    <div class="hint">platform.openai.com → API keys<br>Wird nur lokal auf diesem Gerät gespeichert.</div>
-    <span class="reset-link" onclick="showResetConfirm()">Key löschen / ändern</span>
+    <div class="hint">platform.openai.com → API keys<br>Stored locally on this device only.</div>
+    <span class="reset-link" onclick="showResetConfirm()">Remove / change key</span>
   </div>
 </div>
 
@@ -318,7 +318,7 @@
     </div>
     <div>
       <div class="app-title">Voca</div>
-      <div class="app-sub">Sprache als Text</div>
+      <div class="app-sub">Speech to Text</div>
     </div>
     <div class="header-right">
       <span class="note-count-badge" id="note-count"></span>
@@ -343,18 +343,18 @@
         </svg>
       </button>
     </div>
-    <div class="status" id="status">Tippen zum Aufnehmen</div>
+    <div class="status" id="status">Tap to record</div>
     <div class="timer" id="timer"></div>
-    <button class="btn-dim" id="btn-dim" onclick="toggleDimScreen()">Bildschirm abdunkeln</button>
+    <button class="btn-dim" id="btn-dim" onclick="toggleDimScreen()">Dim screen</button>
     <div class="transcript-box" id="transcript">
-      <div class="transcript-label">Transkription</div>
+      <div class="transcript-label">Transcription</div>
       <span id="transcript-text"></span>
     </div>
   </div>
 
   <div class="notes-section">
     <div class="notes-header">
-      Gespeicherte Notizen
+      Saved Notes
     </div>
     <div class="notes-list" id="notes-list"></div>
   </div>

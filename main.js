@@ -17,14 +17,14 @@ const logErr = (msg, ...args) => console.error(`%c[Voca] ${msg}`, "color:#FCA5A5
 
 async function requestWakeLock() {
   if (!("wakeLock" in navigator)) {
-    log("Wake Lock: API nicht verfügbar (kein Chrome/Android?)");
+    log("Wake Lock: API not available (not Chrome/Android?)");
     return;
   }
   try {
     wakeLock = await navigator.wakeLock.request("screen");
-    log("Wake Lock: Bildschirm-Sperre aktiv");
+    log("Wake Lock: active");
   } catch (e) {
-    logErr("Wake Lock: Anfrage fehlgeschlagen —", e.message);
+    logErr("Wake Lock: request failed —", e.message);
   }
 }
 
@@ -32,7 +32,7 @@ async function releaseWakeLock() {
   if (!wakeLock) return;
   try { await wakeLock.release(); } catch {}
   wakeLock = null;
-  log("Wake Lock: freigegeben");
+  log("Wake Lock: released");
 }
 
 window.toggleDimScreen = async function() {
@@ -40,11 +40,11 @@ window.toggleDimScreen = async function() {
   if (dimActive) {
     showDarkScreen();
     try { await document.documentElement.requestFullscreen(); } catch {}
-    log("Dark Screen: eingeschaltet");
+    log("Dark Screen: on");
   } else {
     hideDarkScreen();
     if (document.fullscreenElement) try { await document.exitFullscreen(); } catch {}
-    log("Dark Screen: ausgeschaltet");
+    log("Dark Screen: off");
   }
 };
 
@@ -57,23 +57,23 @@ function loadKey() {
 }
 
 function init() {
-  log("App gestartet");
+  log("App started");
   initUI();
   if (loadKey()) {
-    log("API Key geladen");
+    log("API key loaded");
     initRecorder(openaiKey);
     document.getElementById("overlay").classList.add("hidden");
     renderNotes(loadNotes());
     setState("idle");
   } else {
-    log("Kein API Key gefunden — Setup-Overlay angezeigt");
+    log("No API key found — showing setup overlay");
   }
 }
 
 // ── Aufnahme toggle ────────────────────────────────────────
 window.toggleRecording = async function() {
   if (recording) {
-    log("Aufnahme gestoppt");
+    log("Recording stopped");
     recording = false;
     if (dimActive) { dimActive = false; hideDarkScreen(); }
     await releaseWakeLock();
@@ -81,39 +81,39 @@ window.toggleRecording = async function() {
 
     try {
       const { blob, duration } = await stopRecording();
-      log(`Audio-Blob: ${(blob?.size / 1024).toFixed(1)} KB, Dauer: ${(duration / 1000).toFixed(1)}s`);
+      log(`Audio blob: ${(blob?.size / 1024).toFixed(1)} KB, duration: ${(duration / 1000).toFixed(1)}s`);
 
       if (!blob || blob.size < 1500) {
-        log("Aufnahme zu kurz — wird verworfen");
+        log("Recording too short — discarded");
         setState("idle");
         return;
       }
 
-      log("Sende Audio an Whisper…");
+      log("Sending audio to Whisper…");
       const { text, language } = await transcribe(blob);
-      log(`Transkription fertig [${language}]: "${text.slice(0, 80)}${text.length > 80 ? "…" : ""}"`);
+      log(`Transcription done [${language}]: "${text.slice(0, 80)}${text.length > 80 ? "…" : ""}"`);
 
       if (text && text.trim()) {
         showTranscript(text);
         setState("summarizing");
-        log("Sende Text an GPT für Zusammenfassung…");
-        const summary = await summarize(text, language).catch((e) => { logErr("Zusammenfassung fehlgeschlagen —", e.message); return ""; });
-        if (summary) log(`Zusammenfassung: "${summary.slice(0, 80)}${summary.length > 80 ? "…" : ""}"`);
+        log("Sending text to GPT for summary…");
+        const summary = await summarize(text, language).catch((e) => { logErr("Summary failed —", e.message); return ""; });
+        if (summary) log(`Summary: "${summary.slice(0, 80)}${summary.length > 80 ? "…" : ""}"`);
         saveNote(text, duration, language, summary);
         renderNotes(loadNotes());
       } else {
-        log("Kein Text transkribiert — Notiz nicht gespeichert");
+        log("No text transcribed — note not saved");
       }
 
       setState("idle");
     } catch (e) {
-      logErr("Fehler im Recording-Flow —", e.message);
+      logErr("Error in recording flow —", e.message);
       showError(e.message);
       showTranscript("");
     }
 
   } else {
-    log("Starte Aufnahme…");
+    log("Starting recording…");
     try {
       await startRecording();
       await requestWakeLock();
@@ -121,8 +121,8 @@ window.toggleRecording = async function() {
       showTranscript("");
       setState("recording");
     } catch (e) {
-      logErr("Mikrofon nicht verfügbar —", e.message);
-      showError("Mikrofon nicht verfügbar");
+      logErr("Microphone not available —", e.message);
+      showError("Microphone not available");
     }
   }
 };
@@ -156,7 +156,7 @@ window.saveKey = function() {
   const err = document.getElementById("key-err");
 
   if (!val.startsWith("sk-")) {
-    err.textContent = "OpenAI Key muss mit sk- beginnen";
+    err.textContent = "OpenAI key must start with sk-";
     return;
   }
 
@@ -168,12 +168,12 @@ window.saveKey = function() {
     renderNotes(loadNotes());
     setState("idle");
   } catch (e) {
-    err.textContent = "Speichern fehlgeschlagen";
+    err.textContent = "Failed to save";
   }
 };
 
 window.showResetConfirm = function() {
-  if (!confirm("API Key wirklich löschen?")) return;
+  if (!confirm("Really delete the API key?")) return;
   localStorage.removeItem(STORAGE_KEY_OPENAI);
   openaiKey = "";
   document.getElementById("openai-key-input").value = "";

@@ -33,22 +33,22 @@ export function setState(state) {
   const rings = document.querySelectorAll(".ripple-ring");
 
   if (state === "idle") {
-    statusEl.textContent = "Tippen zum Aufnehmen";
+    statusEl.textContent = "Tap to record";
     rings.forEach(r => r.classList.remove("show"));
     dimBtnEl.classList.remove("visible");
     stopTimer();
   } else if (state === "recording") {
-    statusEl.textContent = "Aufnahme läuft — nochmal tippen zum Stoppen";
+    statusEl.textContent = "Recording — tap again to stop";
     rings.forEach(r => r.classList.add("show"));
     dimBtnEl.classList.add("visible");
     startTimer();
   } else if (state === "transcribing") {
-    statusEl.textContent = "Wird transkribiert…";
+    statusEl.textContent = "Transcribing…";
     rings.forEach(r => r.classList.remove("show"));
     dimBtnEl.classList.remove("visible");
     stopTimer();
   } else if (state === "summarizing") {
-    statusEl.textContent = "Zusammenfassung wird erstellt…";
+    statusEl.textContent = "Generating summary…";
   }
 }
 
@@ -58,18 +58,18 @@ export function showTranscript(text) {
 }
 
 export function renderNotes(notes) {
-  log(`Render: ${notes.length} Notiz(en)`);
+  log(`Render: ${notes.length} note(s)`);
   if (noteCountEl) noteCountEl.textContent = notes.length ? `${notes.length}` : "";
 
   if (!notes.length) {
-    listEl.innerHTML = `<p class="empty">Noch keine Aufnahmen gespeichert.<br>Tippe auf den Knopf und sprich.</p>`;
+    listEl.innerHTML = `<p class="empty">No recordings yet.<br>Tap the button and start speaking.</p>`;
     return;
   }
 
   listEl.innerHTML = notes.map(note => {
     const d       = new Date(note.timestamp);
-    const dateStr = d.toLocaleDateString("de-DE", { day: "2-digit", month: "short" });
-    const timeStr = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    const timeStr = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     const dur     = note.duration ? formatDur(note.duration) : "";
     const lang    = note.language ? `<span class="note-lang">${note.language}</span>` : "";
 
@@ -81,17 +81,17 @@ export function renderNotes(notes) {
           ${dur ? `<span class="note-dur">${dur}</span>` : ""}
         </div>
         <p class="note-text">${escHtml(note.text)}</p>
-        ${note.summary ? `<div class="note-summary"><span class="note-summary-label">KI-Zusammenfassung</span>${escHtml(note.summary)}</div>` : ""}
+        ${note.summary ? `<div class="note-summary"><span class="note-summary-label">AI Summary</span>${escHtml(note.summary)}</div>` : ""}
         <div class="note-actions">
-          <button class="btn-copy" onclick="copyNote(${note.id})">Kopieren</button>
-          <button class="btn-del"  onclick="deleteNoteUI(${note.id})">Löschen</button>
+          <button class="btn-copy" onclick="copyNote(${note.id})">Copy</button>
+          <button class="btn-del"  onclick="deleteNoteUI(${note.id})">Delete</button>
         </div>
       </div>`;
   }).join("");
 }
 
 export function showError(msg) {
-  log(`Fehler angezeigt: "${msg}"`);
+  log(`Error shown: "${msg}"`);
   statusEl.textContent = "⚠ " + msg;
   setTimeout(() => setState("idle"), 4000);
 }
