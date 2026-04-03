@@ -35,6 +35,35 @@ async function releaseWakeLock() {
   log("Wake Lock: released");
 }
 
+// ── iOS silent audio (prevents auto-sleep on iOS PWA) ──────
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+let silentAudioCtx = null;
+
+function startSilentAudio() {
+  if (!isIOS) return;
+  try {
+    silentAudioCtx = new AudioContext();
+    const buffer = silentAudioCtx.createBuffer(1, silentAudioCtx.sampleRate, silentAudioCtx.sampleRate);
+    const source = silentAudioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    source.connect(silentAudioCtx.destination);
+    source.start();
+    log("Silent audio loop started (iOS keep-alive)");
+  } catch (e) {
+    logErr("Silent audio failed —", e.message);
+  }
+}
+
+function stopSilentAudio() {
+  if (!silentAudioCtx) return;
+  try { silentAudioCtx.close(); } catch {}
+  silentAudioCtx = null;
+  log("Silent audio stopped");
+}
+
 window.toggleDimScreen = async function() {
   dimActive = !dimActive;
   if (dimActive) {
@@ -77,6 +106,7 @@ window.toggleRecording = async function() {
     recording = false;
     if (dimActive) { dimActive = false; hideDarkScreen(); }
     await releaseWakeLock();
+    stopSilentAudio();
     setState("transcribing");
 
     try {
@@ -115,6 +145,7 @@ window.toggleRecording = async function() {
     try {
       await startRecording();
       await requestWakeLock();
+      startSilentAudio();
       recording = true;
       setState("recording");
     } catch (e) {
