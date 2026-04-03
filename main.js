@@ -35,10 +35,17 @@ async function releaseWakeLock() {
   log("Wake Lock: freigegeben");
 }
 
-window.toggleDimScreen = function() {
+window.toggleDimScreen = async function() {
   dimActive = !dimActive;
-  if (dimActive) { showDarkScreen(); log("Dark Screen: eingeschaltet"); }
-  else           { hideDarkScreen(); log("Dark Screen: ausgeschaltet"); }
+  if (dimActive) {
+    showDarkScreen();
+    try { await document.documentElement.requestFullscreen(); } catch {}
+    log("Dark Screen: eingeschaltet");
+  } else {
+    hideDarkScreen();
+    if (document.fullscreenElement) try { await document.exitFullscreen(); } catch {}
+    log("Dark Screen: ausgeschaltet");
+  }
 };
 
 function loadKey() {

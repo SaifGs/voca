@@ -225,16 +225,6 @@
     justify-content: center;
   }
   .dark-screen.visible { display: flex; }
-  .dark-screen-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #EF4444;
-    animation: pulse-dot 1.4s ease-in-out infinite;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: .4; transform: scale(.7); }
-  }
   .dark-screen-unlock {
     position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
     width: 36px; height: 36px;
@@ -372,7 +362,6 @@
 </div>
 
 <div class="dark-screen" id="dark-screen">
-  <div class="dark-screen-dot"></div>
   <button class="dark-screen-unlock" onclick="toggleDimScreen()"></button>
 </div>
 
