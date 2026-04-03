@@ -4,6 +4,9 @@
 
 import { OPENAI_STT_MODEL, OPENAI_CHAT_MODEL } from "./config.js";
 
+const log    = (msg, ...args) => console.log(`%c[Recorder] ${msg}`, "color:#3FB950;font-weight:600", ...args);
+const logErr = (msg, ...args) => console.error(`%c[Recorder] ${msg}`, "color:#FCA5A5;font-weight:600", ...args);
+
 let mediaRecorder  = null;
 let audioChunks    = [];
 let recordingStart = 0;
@@ -11,6 +14,7 @@ let openaiKey      = "";
 
 export function initRecorder(key) {
   openaiKey = key;
+  log("Initialisiert");
 }
 
 export async function startRecording() {
@@ -19,6 +23,7 @@ export async function startRecording() {
     ? "audio/webm;codecs=opus"
     : "audio/mp4";
 
+  log(`Mikrofon aktiv — Codec: ${mimeType}`);
   audioChunks    = [];
   recordingStart = Date.now();
   mediaRecorder  = new MediaRecorder(stream, { mimeType });
@@ -28,6 +33,7 @@ export async function startRecording() {
   };
 
   mediaRecorder.start(250);
+  log("MediaRecorder gestartet (250ms chunks)");
 }
 
 export function stopRecording() {
@@ -51,10 +57,12 @@ export function stopRecording() {
 
 export async function transcribe(blob) {
   const ext      = blob.type.includes("mp4") ? "mp4" : "webm";
+  log(`Whisper-Anfrage — Modell: ${OPENAI_STT_MODEL}, Datei: audio.${ext}, Größe: ${(blob.size / 1024).toFixed(1)} KB`);
+
   const formData = new FormData();
   formData.append("file",            blob, `audio.${ext}`);
   formData.append("model",           OPENAI_STT_MODEL);
-  formData.append("response_format", "verbose_json"); // gibt auch Sprache zurück
+  formData.append("response_format", "verbose_json");
 
   const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method:  "POST",
@@ -63,11 +71,13 @@ export async function transcribe(blob) {
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Transkription fehlgeschlagen: ${res.status} — ${err.error?.message || ""}`);
+    const errData = await res.json().catch(() => ({}));
+    logErr(`Whisper HTTP ${res.status} —`, errData.error?.message || "(kein Fehlertext)");
+    throw new Error(`Transkription fehlgeschlagen: ${res.status} — ${errData.error?.message || ""}`);
   }
 
   const data = await res.json();
+  log(`Whisper-Antwort — Sprache: "${data.language}", Zeichen: ${data.text?.length ?? 0}`);
   return {
     text:     data.text     || "",
     language: data.language || "",
@@ -75,6 +85,7 @@ export async function transcribe(blob) {
 }
 
 export async function summarize(text, language) {
+  log(`GPT-Zusammenfassung — Modell: ${OPENAI_CHAT_MODEL}, Sprache: "${language}", Eingabe: ${text.length} Zeichen`);
   const langHint = language ? ` The text is in language code "${language}".` : "";
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method:  "POST",
@@ -97,10 +108,13 @@ export async function summarize(text, language) {
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Zusammenfassung fehlgeschlagen: ${res.status} — ${err.error?.message || ""}`);
+    const errData = await res.json().catch(() => ({}));
+    logErr(`GPT HTTP ${res.status} —`, errData.error?.message || "(kein Fehlertext)");
+    throw new Error(`Zusammenfassung fehlgeschlagen: ${res.status} — ${errData.error?.message || ""}`);
   }
 
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content?.trim() || "";
+  const data   = await res.json();
+  const result = data.choices?.[0]?.message?.content?.trim() || "";
+  log(`GPT-Antwort — ${result.length} Zeichen`);
+  return result;
 }

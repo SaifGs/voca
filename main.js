@@ -12,21 +12,33 @@ let recording  = false;
 let wakeLock   = null;
 let dimActive  = false;
 
+const log    = (msg, ...args) => console.log(`%c[Voca] ${msg}`, "color:#A78BFA;font-weight:600", ...args);
+const logErr = (msg, ...args) => console.error(`%c[Voca] ${msg}`, "color:#FCA5A5;font-weight:600", ...args);
+
 async function requestWakeLock() {
-  if (!("wakeLock" in navigator)) return;
-  try { wakeLock = await navigator.wakeLock.request("screen"); } catch {}
+  if (!("wakeLock" in navigator)) {
+    log("Wake Lock: API nicht verfügbar (kein Chrome/Android?)");
+    return;
+  }
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    log("Wake Lock: Bildschirm-Sperre aktiv");
+  } catch (e) {
+    logErr("Wake Lock: Anfrage fehlgeschlagen —", e.message);
+  }
 }
 
 async function releaseWakeLock() {
   if (!wakeLock) return;
   try { await wakeLock.release(); } catch {}
   wakeLock = null;
+  log("Wake Lock: freigegeben");
 }
 
 window.toggleDimScreen = function() {
   dimActive = !dimActive;
-  if (dimActive) showDarkScreen();
-  else            hideDarkScreen();
+  if (dimActive) { showDarkScreen(); log("Dark Screen: eingeschaltet"); }
+  else           { hideDarkScreen(); log("Dark Screen: ausgeschaltet"); }
 };
 
 function loadKey() {
@@ -38,18 +50,23 @@ function loadKey() {
 }
 
 function init() {
+  log("App gestartet");
   initUI();
   if (loadKey()) {
+    log("API Key geladen");
     initRecorder(openaiKey);
     document.getElementById("overlay").classList.add("hidden");
     renderNotes(loadNotes());
     setState("idle");
+  } else {
+    log("Kein API Key gefunden — Setup-Overlay angezeigt");
   }
 }
 
 // ── Aufnahme toggle ────────────────────────────────────────
 window.toggleRecording = async function() {
   if (recording) {
+    log("Aufnahme gestoppt");
     recording = false;
     if (dimActive) { dimActive = false; hideDarkScreen(); }
     await releaseWakeLock();
@@ -57,36 +74,47 @@ window.toggleRecording = async function() {
 
     try {
       const { blob, duration } = await stopRecording();
+      log(`Audio-Blob: ${(blob?.size / 1024).toFixed(1)} KB, Dauer: ${(duration / 1000).toFixed(1)}s`);
 
       if (!blob || blob.size < 1500) {
+        log("Aufnahme zu kurz — wird verworfen");
         setState("idle");
         return;
       }
 
+      log("Sende Audio an Whisper…");
       const { text, language } = await transcribe(blob);
+      log(`Transkription fertig [${language}]: "${text.slice(0, 80)}${text.length > 80 ? "…" : ""}"`);
 
       if (text && text.trim()) {
         showTranscript(text);
         setState("summarizing");
-        const summary = await summarize(text, language).catch(() => "");
+        log("Sende Text an GPT für Zusammenfassung…");
+        const summary = await summarize(text, language).catch((e) => { logErr("Zusammenfassung fehlgeschlagen —", e.message); return ""; });
+        if (summary) log(`Zusammenfassung: "${summary.slice(0, 80)}${summary.length > 80 ? "…" : ""}"`);
         saveNote(text, duration, language, summary);
         renderNotes(loadNotes());
+      } else {
+        log("Kein Text transkribiert — Notiz nicht gespeichert");
       }
 
       setState("idle");
     } catch (e) {
+      logErr("Fehler im Recording-Flow —", e.message);
       showError(e.message);
       showTranscript("");
     }
 
   } else {
+    log("Starte Aufnahme…");
     try {
       await startRecording();
       await requestWakeLock();
       recording = true;
       showTranscript("");
       setState("recording");
-    } catch {
+    } catch (e) {
+      logErr("Mikrofon nicht verfügbar —", e.message);
       showError("Mikrofon nicht verfügbar");
     }
   }

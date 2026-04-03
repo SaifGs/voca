@@ -4,11 +4,16 @@
 
 import { STORAGE_NOTES_KEY, MAX_NOTES } from "./config.js";
 
+const log = (msg, ...args) => console.log(`%c[Storage] ${msg}`, "color:#F59E0B;font-weight:600", ...args);
+
 export function loadNotes() {
   try {
-    const raw = localStorage.getItem(STORAGE_NOTES_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const raw   = localStorage.getItem(STORAGE_NOTES_KEY);
+    const notes = raw ? JSON.parse(raw) : [];
+    log(`${notes.length} Notiz(en) geladen`);
+    return notes;
   } catch {
+    log("Fehler beim Laden — leeres Array zurückgegeben");
     return [];
   }
 }
@@ -26,12 +31,14 @@ export function saveNote(text, durationMs, language, summary) {
   notes.unshift(note);
   if (notes.length > MAX_NOTES) notes.length = MAX_NOTES;
   localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
+  log(`Notiz gespeichert — ID: ${note.id}, Sprache: "${note.language}", Zeichen: ${note.text.length}, Zusammenfassung: ${note.summary ? "ja" : "nein"}`);
   return note;
 }
 
 export function deleteNote(id) {
   const notes = loadNotes().filter(n => n.id !== id);
   localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
+  log(`Notiz gelöscht — ID: ${id}`);
 }
 
 export function exportNotes() {

@@ -2,6 +2,8 @@
 // ui.js — DOM Manipulation
 // ══════════════════════════════════════════════════════════
 
+const log = (msg, ...args) => console.log(`%c[UI] ${msg}`, "color:#38BDF8;font-weight:600", ...args);
+
 let btnEl, statusEl, transcriptEl, transcriptTextEl, timerEl, listEl, noteCountEl, dimBtnEl, darkScreenEl;
 let timerInterval = null;
 
@@ -26,6 +28,7 @@ export function hideDarkScreen() {
 }
 
 export function setState(state) {
+  log(`State → ${state}`);
   btnEl.dataset.state = state;
   const rings = document.querySelectorAll(".ripple-ring");
 
@@ -55,6 +58,7 @@ export function showTranscript(text) {
 }
 
 export function renderNotes(notes) {
+  log(`Render: ${notes.length} Notiz(en)`);
   if (noteCountEl) noteCountEl.textContent = notes.length ? `${notes.length}` : "";
 
   if (!notes.length) {
@@ -87,6 +91,7 @@ export function renderNotes(notes) {
 }
 
 export function showError(msg) {
+  log(`Fehler angezeigt: "${msg}"`);
   statusEl.textContent = "⚠ " + msg;
   setTimeout(() => setState("idle"), 4000);
 }
