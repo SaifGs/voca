@@ -35,33 +35,48 @@ async function releaseWakeLock() {
   log("Wake Lock: released");
 }
 
-// ── iOS silent audio (prevents auto-sleep on iOS PWA) ──────
+// ── iOS keep-alive (prevents auto-sleep on iOS PWA) ────────
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-let silentAudioCtx = null;
+let iosAudioCtx  = null;
+let iosOscillator = null;
 
 function startSilentAudio() {
   if (!isIOS) return;
   try {
-    silentAudioCtx = new AudioContext();
-    const buffer = silentAudioCtx.createBuffer(1, silentAudioCtx.sampleRate, silentAudioCtx.sampleRate);
-    const source = silentAudioCtx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-    source.connect(silentAudioCtx.destination);
-    source.start();
-    log("Silent audio loop started (iOS keep-alive)");
+    iosAudioCtx = new AudioContext();
+
+    // Nearly-inaudible oscillator — iOS must see actual audio output, not silence
+    const gain = iosAudioCtx.createGain();
+    gain.gain.value = 0.001;
+    gain.connect(iosAudioCtx.destination);
+
+    iosOscillator = iosAudioCtx.createOscillator();
+    iosOscillator.frequency.value = 440;
+    iosOscillator.connect(gain);
+    iosOscillator.start();
+
+    // If iOS suspends the context, immediately resume it
+    iosAudioCtx.addEventListener("statechange", () => {
+      if (iosAudioCtx && iosAudioCtx.state === "suspended") {
+        iosAudioCtx.resume().catch(() => {});
+        log("iOS AudioContext resumed after suspension");
+      }
+    });
+
+    log(`iOS keep-alive started (AudioContext state: ${iosAudioCtx.state})`);
   } catch (e) {
-    logErr("Silent audio failed —", e.message);
+    logErr("iOS keep-alive failed —", e.message);
   }
 }
 
 function stopSilentAudio() {
-  if (!silentAudioCtx) return;
-  try { silentAudioCtx.close(); } catch {}
-  silentAudioCtx = null;
-  log("Silent audio stopped");
+  if (!iosAudioCtx) return;
+  try { iosOscillator?.stop(); iosAudioCtx.close(); } catch {}
+  iosAudioCtx  = null;
+  iosOscillator = null;
+  log("iOS keep-alive stopped");
 }
 
 window.toggleDimScreen = async function() {
