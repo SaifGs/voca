@@ -221,19 +221,10 @@
     display: none;
     position: fixed; inset: 0; z-index: 200;
     background: #000;
-    cursor: pointer;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: .6rem;
   }
   .dark-screen.visible { display: flex; }
-  .dark-screen-hint {
-    color: rgba(255,255,255,.18);
-    font-size: .8rem;
-    letter-spacing: .04em;
-    user-select: none;
-  }
   .dark-screen-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
@@ -244,6 +235,14 @@
     0%, 100% { opacity: 1; transform: scale(1); }
     50%       { opacity: .4; transform: scale(.7); }
   }
+  .dark-screen-unlock {
+    position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,.08); border: none; border-radius: 6px;
+    cursor: pointer; transition: background .2s;
+  }
+  .dark-screen-unlock:hover,
+  .dark-screen-unlock:active { background: rgba(255,255,255,.18); }
   .btn-copy, .btn-del {
     border: none; border-radius: 6px;
     padding: 4px 12px; font-size: .73rem;
@@ -372,9 +371,9 @@
 
 </div>
 
-<div class="dark-screen" id="dark-screen" onclick="toggleDimScreen()">
+<div class="dark-screen" id="dark-screen">
   <div class="dark-screen-dot"></div>
-  <span class="dark-screen-hint">Tippen zum Fortsetzen</span>
+  <button class="dark-screen-unlock" onclick="toggleDimScreen()"></button>
 </div>
 
 <script type="module" src="main.js"></script>
