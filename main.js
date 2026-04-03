@@ -35,47 +35,39 @@ async function releaseWakeLock() {
   log("Wake Lock: released");
 }
 
-// ── iOS keep-alive (prevents auto-sleep on iOS PWA) ────────
+// ── iOS keep-alive (hidden video trick — NoSleep.js technique) ─
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-let iosAudioCtx  = null;
-let iosOscillator = null;
+let iosKeepAliveVideo = null;
+
+function buildKeepAliveVideo() {
+  // Minimal 1×1 transparent MP4 — iOS won't sleep during active video playback
+  const src = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAA19tZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0OCByMjYwMSBhMGNkN2QzIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNSAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiBzdHJlYWRzPTMgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTEgb3Blbl9nb3A9MCB3ZWlnaHRwPTIga2V5aW50PTI1MCBrZXlpbnRfbWluPTI1IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAFZWxpYngAAkvA";
+  const v = document.createElement("video");
+  v.setAttribute("playsinline", "");
+  v.muted  = true;
+  v.loop   = true;
+  v.src    = src;
+  v.style.cssText = "position:fixed;width:1px;height:1px;opacity:0;pointer-events:none";
+  document.body.appendChild(v);
+  return v;
+}
 
 function startSilentAudio() {
   if (!isIOS) return;
   try {
-    iosAudioCtx = new AudioContext();
-
-    // Nearly-inaudible oscillator — iOS must see actual audio output, not silence
-    const gain = iosAudioCtx.createGain();
-    gain.gain.value = 0.001;
-    gain.connect(iosAudioCtx.destination);
-
-    iosOscillator = iosAudioCtx.createOscillator();
-    iosOscillator.frequency.value = 440;
-    iosOscillator.connect(gain);
-    iosOscillator.start();
-
-    // If iOS suspends the context, immediately resume it
-    iosAudioCtx.addEventListener("statechange", () => {
-      if (iosAudioCtx && iosAudioCtx.state === "suspended") {
-        iosAudioCtx.resume().catch(() => {});
-        log("iOS AudioContext resumed after suspension");
-      }
-    });
-
-    log(`iOS keep-alive started (AudioContext state: ${iosAudioCtx.state})`);
+    if (!iosKeepAliveVideo) iosKeepAliveVideo = buildKeepAliveVideo();
+    iosKeepAliveVideo.play().then(() => log("iOS keep-alive video playing"))
+                             .catch(e => logErr("iOS keep-alive failed —", e.message));
   } catch (e) {
     logErr("iOS keep-alive failed —", e.message);
   }
 }
 
 function stopSilentAudio() {
-  if (!iosAudioCtx) return;
-  try { iosOscillator?.stop(); iosAudioCtx.close(); } catch {}
-  iosAudioCtx  = null;
-  iosOscillator = null;
+  if (!iosKeepAliveVideo) return;
+  iosKeepAliveVideo.pause();
   log("iOS keep-alive stopped");
 }
 
