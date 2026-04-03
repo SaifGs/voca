@@ -1,8 +1,8 @@
 {
   "name": "Voca",
   "short_name": "Voca",
-  "description": "Sprache als Text — schnell und lokal",
-  "start_url": "/",
+  "description": "Speech to text — fast and local",
+  "start_url": "/voca/",
   "display": "standalone",
   "background_color": "#0D1117",
   "theme_color": "#0D1117",
