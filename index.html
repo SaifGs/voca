@@ -125,25 +125,7 @@
     letter-spacing: .04em;
   }
 
-  /* ── Transcript ── */
-  .transcript-box {
-    width: 100%; max-width: 560px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: 12px;
-    padding: .9rem 1.1rem;
-    font-size: .88rem; line-height: 1.6;
-    color: var(--text);
-    display: none;
-  }
-  .transcript-box.visible { display: block; animation: fadein .3s ease; }
   @keyframes fadein { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
-  .transcript-label {
-    font-size: .68rem; color: var(--accent);
-    font-weight: 600; letter-spacing: .07em;
-    text-transform: uppercase; margin-bottom: .35rem;
-  }
 
   /* ── Notes Section ── */
   .notes-section {
@@ -346,10 +328,6 @@
     <div class="status" id="status">Tap to record</div>
     <div class="timer" id="timer"></div>
     <button class="btn-dim" id="btn-dim" onclick="toggleDimScreen()">Dim screen</button>
-    <div class="transcript-box" id="transcript">
-      <div class="transcript-label">Transcription</div>
-      <span id="transcript-text"></span>
-    </div>
   </div>
 
   <div class="notes-section">

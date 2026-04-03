@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════════════════
 
 import { STORAGE_KEY_OPENAI }                                                from "./config.js";
-import { initUI, setState, showTranscript, renderNotes, showError, showDarkScreen, hideDarkScreen } from "./ui.js";
+import { initUI, setState, renderNotes, showError, showDarkScreen, hideDarkScreen } from "./ui.js";
 import { initRecorder, startRecording, stopRecording, transcribe, summarize } from "./recorder.js";
 import { loadNotes, saveNote, deleteNote, exportNotes }                     from "./storage.js";
 
@@ -94,7 +94,6 @@ window.toggleRecording = async function() {
       log(`Transcription done [${language}]: "${text.slice(0, 80)}${text.length > 80 ? "…" : ""}"`);
 
       if (text && text.trim()) {
-        showTranscript(text);
         setState("summarizing");
         log("Sending text to GPT for summary…");
         const summary = await summarize(text, language).catch((e) => { logErr("Summary failed —", e.message); return ""; });
@@ -109,7 +108,6 @@ window.toggleRecording = async function() {
     } catch (e) {
       logErr("Error in recording flow —", e.message);
       showError(e.message);
-      showTranscript("");
     }
 
   } else {
@@ -118,7 +116,6 @@ window.toggleRecording = async function() {
       await startRecording();
       await requestWakeLock();
       recording = true;
-      showTranscript("");
       setState("recording");
     } catch (e) {
       logErr("Microphone not available —", e.message);

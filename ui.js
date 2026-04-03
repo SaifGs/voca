@@ -4,15 +4,13 @@
 
 const log = (msg, ...args) => console.log(`%c[UI] ${msg}`, "color:#38BDF8;font-weight:600", ...args);
 
-let btnEl, statusEl, transcriptEl, transcriptTextEl, timerEl, listEl, noteCountEl, dimBtnEl, darkScreenEl;
+let btnEl, statusEl, timerEl, listEl, noteCountEl, dimBtnEl, darkScreenEl;
 let timerInterval = null;
 
 export function initUI() {
-  btnEl           = document.getElementById("rec-btn");
-  statusEl        = document.getElementById("status");
-  transcriptEl    = document.getElementById("transcript");
-  transcriptTextEl= document.getElementById("transcript-text");
-  timerEl         = document.getElementById("timer");
+  btnEl    = document.getElementById("rec-btn");
+  statusEl = document.getElementById("status");
+  timerEl  = document.getElementById("timer");
   listEl          = document.getElementById("notes-list");
   noteCountEl     = document.getElementById("note-count");
   dimBtnEl        = document.getElementById("btn-dim");
@@ -50,11 +48,6 @@ export function setState(state) {
   } else if (state === "summarizing") {
     statusEl.textContent = "Generating summary…";
   }
-}
-
-export function showTranscript(text) {
-  transcriptTextEl.textContent = text;
-  transcriptEl.classList.toggle("visible", !!text);
 }
 
 export function renderNotes(notes) {
