@@ -3,12 +3,31 @@
 // ══════════════════════════════════════════════════════════
 
 import { STORAGE_KEY_OPENAI }                                                from "./config.js";
-import { initUI, setState, showTranscript, renderNotes, showError }         from "./ui.js";
+import { initUI, setState, showTranscript, renderNotes, showError, showDarkScreen, hideDarkScreen } from "./ui.js";
 import { initRecorder, startRecording, stopRecording, transcribe, summarize } from "./recorder.js";
 import { loadNotes, saveNote, deleteNote, exportNotes }                     from "./storage.js";
 
-let openaiKey = "";
-let recording = false;
+let openaiKey  = "";
+let recording  = false;
+let wakeLock   = null;
+let dimActive  = false;
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  try { wakeLock = await navigator.wakeLock.request("screen"); } catch {}
+}
+
+async function releaseWakeLock() {
+  if (!wakeLock) return;
+  try { await wakeLock.release(); } catch {}
+  wakeLock = null;
+}
+
+window.toggleDimScreen = function() {
+  dimActive = !dimActive;
+  if (dimActive) showDarkScreen();
+  else            hideDarkScreen();
+};
 
 function loadKey() {
   try {
@@ -32,6 +51,8 @@ function init() {
 window.toggleRecording = async function() {
   if (recording) {
     recording = false;
+    if (dimActive) { dimActive = false; hideDarkScreen(); }
+    await releaseWakeLock();
     setState("transcribing");
 
     try {
@@ -61,6 +82,7 @@ window.toggleRecording = async function() {
   } else {
     try {
       await startRecording();
+      await requestWakeLock();
       recording = true;
       showTranscript("");
       setState("recording");

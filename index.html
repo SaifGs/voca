@@ -198,6 +198,51 @@
     letter-spacing: .05em; text-transform: uppercase; margin-bottom: .2rem;
   }
   .note-actions { display: flex; gap: .4rem; margin-top: .55rem; }
+
+  /* ── Dim / Dark-Screen ── */
+  .btn-dim {
+    display: none;
+    margin-top: .9rem;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 20px;
+    color: var(--muted);
+    font-family: "Inter", sans-serif;
+    font-size: .78rem;
+    padding: 6px 18px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-dim:hover { background: rgba(255,255,255,.12); }
+  .btn-dim.visible { display: inline-block; }
+
+  .dark-screen {
+    display: none;
+    position: fixed; inset: 0; z-index: 200;
+    background: #000;
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+  }
+  .dark-screen.visible { display: flex; }
+  .dark-screen-hint {
+    color: rgba(255,255,255,.18);
+    font-size: .8rem;
+    letter-spacing: .04em;
+    user-select: none;
+  }
+  .dark-screen-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #EF4444;
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: .4; transform: scale(.7); }
+  }
   .btn-copy, .btn-del {
     border: none; border-radius: 6px;
     padding: 4px 12px; font-size: .73rem;
@@ -310,6 +355,7 @@
     </div>
     <div class="status" id="status">Tippen zum Aufnehmen</div>
     <div class="timer" id="timer"></div>
+    <button class="btn-dim" id="btn-dim" onclick="toggleDimScreen()">Bildschirm abdunkeln</button>
     <div class="transcript-box" id="transcript">
       <div class="transcript-label">Transkription</div>
       <span id="transcript-text"></span>
@@ -323,6 +369,11 @@
     <div class="notes-list" id="notes-list"></div>
   </div>
 
+</div>
+
+<div class="dark-screen" id="dark-screen" onclick="toggleDimScreen()">
+  <div class="dark-screen-dot"></div>
+  <span class="dark-screen-hint">Tippen zum Fortsetzen</span>
 </div>
 
 <script type="module" src="main.js"></script>

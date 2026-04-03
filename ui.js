@@ -2,7 +2,7 @@
 // ui.js — DOM Manipulation
 // ══════════════════════════════════════════════════════════
 
-let btnEl, statusEl, transcriptEl, transcriptTextEl, timerEl, listEl, noteCountEl;
+let btnEl, statusEl, transcriptEl, transcriptTextEl, timerEl, listEl, noteCountEl, dimBtnEl, darkScreenEl;
 let timerInterval = null;
 
 export function initUI() {
@@ -13,6 +13,16 @@ export function initUI() {
   timerEl         = document.getElementById("timer");
   listEl          = document.getElementById("notes-list");
   noteCountEl     = document.getElementById("note-count");
+  dimBtnEl        = document.getElementById("btn-dim");
+  darkScreenEl    = document.getElementById("dark-screen");
+}
+
+export function showDarkScreen() {
+  darkScreenEl.classList.add("visible");
+}
+
+export function hideDarkScreen() {
+  darkScreenEl.classList.remove("visible");
 }
 
 export function setState(state) {
@@ -22,14 +32,17 @@ export function setState(state) {
   if (state === "idle") {
     statusEl.textContent = "Tippen zum Aufnehmen";
     rings.forEach(r => r.classList.remove("show"));
+    dimBtnEl.classList.remove("visible");
     stopTimer();
   } else if (state === "recording") {
     statusEl.textContent = "Aufnahme läuft — nochmal tippen zum Stoppen";
     rings.forEach(r => r.classList.add("show"));
+    dimBtnEl.classList.add("visible");
     startTimer();
   } else if (state === "transcribing") {
     statusEl.textContent = "Wird transkribiert…";
     rings.forEach(r => r.classList.remove("show"));
+    dimBtnEl.classList.remove("visible");
     stopTimer();
   } else if (state === "summarizing") {
     statusEl.textContent = "Zusammenfassung wird erstellt…";
