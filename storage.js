@@ -13,11 +13,12 @@ export function loadNotes() {
   }
 }
 
-export function saveNote(text, durationMs, language) {
+export function saveNote(text, durationMs, language, summary) {
   const notes = loadNotes();
   const note = {
     id:        Date.now(),
     text:      text.trim(),
+    summary:   summary || "",
     timestamp: new Date().toISOString(),
     duration:  durationMs,
     language:  language || "",
@@ -41,7 +42,8 @@ export function exportNotes() {
     const dateStr = d.toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric" });
     const timeStr = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
     const lang    = n.language ? ` [${n.language}]` : "";
-    return `[${dateStr} ${timeStr}${lang}]\n${n.text}`;
+    const summary = n.summary ? `\nZusammenfassung: ${n.summary}` : "";
+    return `[${dateStr} ${timeStr}${lang}]\n${n.text}${summary}`;
   });
   return lines.join("\n\n---\n\n");
 }

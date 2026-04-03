@@ -2,7 +2,7 @@
 // recorder.js — Aufnahme + Whisper Transkription
 // ══════════════════════════════════════════════════════════
 
-import { OPENAI_STT_MODEL } from "./config.js";
+import { OPENAI_STT_MODEL, OPENAI_CHAT_MODEL } from "./config.js";
 
 let mediaRecorder  = null;
 let audioChunks    = [];
@@ -72,4 +72,35 @@ export async function transcribe(blob) {
     text:     data.text     || "",
     language: data.language || "",
   };
+}
+
+export async function summarize(text, language) {
+  const langHint = language ? ` The text is in language code "${language}".` : "";
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method:  "POST",
+    headers: {
+      Authorization:  `Bearer ${openaiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model:    OPENAI_CHAT_MODEL,
+      messages: [
+        {
+          role:    "system",
+          content: `You are a precise summarization assistant. Summarize the user's text in 1–2 sentences. Reply in the same language as the input text.${langHint}`,
+        },
+        { role: "user", content: text },
+      ],
+      max_tokens:  120,
+      temperature: 0.3,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Zusammenfassung fehlgeschlagen: ${res.status} — ${err.error?.message || ""}`);
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() || "";
 }

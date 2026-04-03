@@ -4,7 +4,7 @@
 
 import { STORAGE_KEY_OPENAI }                                                from "./config.js";
 import { initUI, setState, showTranscript, renderNotes, showError }         from "./ui.js";
-import { initRecorder, startRecording, stopRecording, transcribe }          from "./recorder.js";
+import { initRecorder, startRecording, stopRecording, transcribe, summarize } from "./recorder.js";
 import { loadNotes, saveNote, deleteNote, exportNotes }                     from "./storage.js";
 
 let openaiKey = "";
@@ -46,7 +46,9 @@ window.toggleRecording = async function() {
 
       if (text && text.trim()) {
         showTranscript(text);
-        saveNote(text, duration, language);
+        setState("summarizing");
+        const summary = await summarize(text, language).catch(() => "");
+        saveNote(text, duration, language, summary);
         renderNotes(loadNotes());
       }
 

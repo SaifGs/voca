@@ -31,6 +31,8 @@ export function setState(state) {
     statusEl.textContent = "Wird transkribiert…";
     rings.forEach(r => r.classList.remove("show"));
     stopTimer();
+  } else if (state === "summarizing") {
+    statusEl.textContent = "Zusammenfassung wird erstellt…";
   }
 }
 
@@ -62,6 +64,7 @@ export function renderNotes(notes) {
           ${dur ? `<span class="note-dur">${dur}</span>` : ""}
         </div>
         <p class="note-text">${escHtml(note.text)}</p>
+        ${note.summary ? `<div class="note-summary"><span class="note-summary-label">KI-Zusammenfassung</span>${escHtml(note.summary)}</div>` : ""}
         <div class="note-actions">
           <button class="btn-copy" onclick="copyNote(${note.id})">Kopieren</button>
           <button class="btn-del"  onclick="deleteNoteUI(${note.id})">Löschen</button>
